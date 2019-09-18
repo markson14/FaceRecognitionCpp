@@ -33,13 +33,17 @@ cmake ..
 make -j4
 ```
 
+- About the .os file
+
+**In this project, the os file is complied in MacOS system. If you want to use in your own PC which is not MacOS, you have to recomplie the .json and .params files in your own computer by using TVM complier. The code will be submitted in wiki later.**
+
 - **CMakeList.txt**
 
   `modify the TVM path into your own `
 
-- **Prefix: ** set the prefix path to your own
+- **Prefix:** set the prefix path to your own
 
-- **Recording ground truth: **`mkdir img` and set record to `1`
+- **Recording ground truth:**`mkdir img` and set record to `1`
 
 ---
 
@@ -63,7 +67,7 @@ Landmark port: 6~14
 **Tun-able Parameters：**
 
 1. **minSize:** set the minimum size of faces for MTCNN detector. Larger size can ensure quick inference time.
-2. **factor: ** set the step factor for pyramid of image.  Larger factor will get fewer images after doing pyramid.
+2. **factor:** set the step factor for pyramid of image.  Larger factor will get fewer images after doing pyramid.
 3. **Frame size:** set the camera or streaming capturing frame size.
 4. **Stage:** set how many stage for MTCNN to implement.
 5. **Average Faces:** default 1 
