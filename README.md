@@ -35,7 +35,7 @@ make -j4
 
 - About the .os file
 
-**In this project, the os file is complied in MacOS system. If you want to use in your own PC which is not MacOS, you have to recomplie the .json and .params files in your own computer by using TVM complier. The code will be submitted in wiki later.**
+Now Linux users can replace the model files with those inside folder `model/linux`
 
 - **CMakeList.txt**
 
