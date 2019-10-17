@@ -1,4 +1,4 @@
-# Face Tracking
+# Face-Recognition-Cpp
 
 - Detect: Fast-MTCNN
 - Verification: MobileFaceNet + Arcface
