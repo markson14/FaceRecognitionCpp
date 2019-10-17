@@ -328,7 +328,6 @@ vector<FaceInfo> MTCNN::ProposalNet(const cv::Mat& img, int minSize, float thres
     }
 
 //    Mat* input_layer = PNet_->input_blobs()[0];
-    cout << "total boxes size:\t" <<total_boxes_.size() << endl;
     total_boxes_.clear();
     for (int i = 0; i < scales.size(); i++) {
         int ws = (int)std::ceil(width*scales[i]);

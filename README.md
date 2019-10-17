@@ -1,27 +1,20 @@
 # Face Tracking
 
-#### ~~Version 1~~
-
-- ~~Detect: dlibfacedetect~~
-- ~~Verification: MobileNet0.5+Arcface~~
-
-#### Version 2
-
 - Detect: Fast-MTCNN
 - Verification: MobileFaceNet + Arcface
 
-**Set up:**
+### **Set up:**
 
 - **Require OpenCV**
 
-```
+```shell
 brew install opencv
 brew link opencv
 brew install pkg-config
 pkg-config --cflags --libs /usr/local/Cellar/opencv/<version_number>/lib/pkgconfig/opencv.pc
 ```
 
-- **Require TVM**
+- **Require [TVM](https://docs.tvm.ai/install/from_source.html#python-package-installation)**
 
 ```shell
 git clone --recursive https://github.com/dmlc/tvm
@@ -33,7 +26,7 @@ cmake ..
 make -j4
 ```
 
-- About the .os file
+- **About the .os file**
 
 Now Linux users can replace the model files with those inside folder `model/linux`
 
@@ -47,7 +40,7 @@ Now Linux users can replace the model files with those inside folder `model/linu
 
 ---
 
-**Output Structure:**
+### **Output Structure:**
 
 ```c++
 struct _FaceInfo {
@@ -64,7 +57,7 @@ Landmark port: 6~14
 
 ---
 
-**Tun-able Parameters：**
+### **Tun-able Parameters：**
 
 1. **minSize:** set the minimum size of faces for MTCNN detector. Larger size can ensure quick inference time.
 2. **factor:** set the step factor for pyramid of image.  Larger factor will get fewer images after doing pyramid.
@@ -72,11 +65,11 @@ Landmark port: 6~14
 4. **Stage:** set how many stage for MTCNN to implement.
 5. **Average Faces:** default 1 
 
----
 
-Demo:
 
-![demo](./assets/Screen Shot 2019-07-11 at 4.46.44 pm.png)
+### #TODO
+
+- Quantize arcface model
 
 ---
 

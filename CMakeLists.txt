@@ -1,8 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.6)
-project(face-tracking)
-
-FIND_PACKAGE(OpenCV 3.4.6 REQUIRED)
-
+project(FaceRecognitionCpp)
+FIND_PACKAGE(OpenCV REQUIRED)
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
@@ -23,6 +21,6 @@ ADD_LIBRARY(facedetect  include/mtcnn_opencv.cpp
                         facetracking.cpp
                         facetracking.hpp)
 
-ADD_EXECUTABLE(face-tracking tvm_runtime_pack.cc main.cpp)
+ADD_EXECUTABLE(FaceRecognitionCpp tvm_runtime_pack.cc main.cpp)
 
-TARGET_LINK_LIBRARIES(face-tracking ${OpenCV_LIBS} facedetect)
+TARGET_LINK_LIBRARIES(FaceRecognitionCpp ${OpenCV_LIBS} facedetect)
