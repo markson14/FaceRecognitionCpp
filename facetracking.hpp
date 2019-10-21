@@ -22,8 +22,8 @@ const int stage = 4;
 const float factor = 0.709f;
 //const cv::Size frame_size = Size(1280,760);
 const cv::Size frame_size = Size(320,240);
-const string prefix = "/Users/marksonzhang/WorkSpace/Face_Tracking/face-tracking/";
-const char arcface_model[30] = "y1-arcface-emore_109";
+const string prefix = "/Users/marksonzhang/Project/FaceRecognitionCpp/models/macos";
+const char arcface_model[30] = "y1-arcface-emore_115";
 
 const extern class MTCNN;
 

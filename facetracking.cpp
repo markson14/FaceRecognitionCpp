@@ -13,6 +13,7 @@
 #include <tvm/runtime/packed_func.h>
 #include <numeric>
 #include "facetracking.hpp"
+#include <time.h>
 
 using namespace std;
 using namespace cv;
@@ -41,7 +42,7 @@ inline float CosineDistance(const cv::Mat &v1, const cv::Mat &v2) {
 
 }
 
-struct _FaceInfo writestruct(vector<FaceInfo> &faceInfo){
+struct _FaceInfo writestruct(vector<FaceInfo> &faceInfo) {
     struct _FaceInfo faces;
     faces.face_count = faceInfo.size();
 
@@ -78,11 +79,13 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
          << CV_MINOR_VERSION << "."
          << CV_SUBMINOR_VERSION << endl;
 
+    clock_t start, end;
+
     //TVM
     Mat faces, face_avg;
     vector<Mat> face_list;
     for (int i = 1; i <= avg_face; i++) {
-        faces = imread(prefix + format("img/zzw_%d.jpg", i));
+        faces = imread("/Users/marksonzhang/Project/FaceRecognitionCpp/" + format("img/zzw_%d.jpg", i));
 //        GaussianBlur(faces,faces,Size( 3, 3 ), 0, 0);
 //        sharpen(faces,faces);
         resize(faces, faces, Size(112, 112), 0, 0, INTER_LINEAR);
@@ -169,7 +172,11 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
                 imwrite(prefix + format("img/zzw_%d.jpg", count), aligned);
                 waitKey(0);
             }
+
+            start = clock();
             Mat fc2 = deploy.forward(aligned);
+            end = clock();
+            cerr << "inference cost: " << (double) (end - start) / CLOCKS_PER_SEC << endl;
 
             // normalize
             fc2 = Zscore(fc2);
@@ -178,7 +185,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
             sum_score += current;
 
 //
-            cerr << "Inference score: " << current << endl;
+//            cerr << "Inference score: " << current << endl;
 
             for (int j = 0; j < 10; j += 2) {
                 if (j == 0 or j == 6) {
@@ -233,7 +240,7 @@ struct _FaceInfo face_detecting(MTCNN *detector) {
     while (cap.isOpened()) {
         cap >> frame;
         resize(frame, frame, frame_size, 0, 0, INTER_LINEAR);
-        cout << frame.type() << "\t" << frame.elemSize() << "\t" << frame.channels() <<"\t" << frame.depth() << endl;
+        cout << frame.type() << "\t" << frame.elemSize() << "\t" << frame.channels() << "\t" << frame.depth() << endl;
         vector<FaceInfo> faceInfo = detector->Detect_mtcnn(frame, minSize, threshold, factor, 4);
 
         faces = writestruct(faceInfo);

@@ -11,11 +11,11 @@ using namespace cv;
 
 int main(){
     //load model
-    FR_MFN_Deploy deploy(prefix+"models");
-    MTCNN detector("/Users/marksonzhang/WorkSpace/Face_Tracking/face-tracking/models");
+    FR_MFN_Deploy deploy(prefix);
+    MTCNN detector(prefix);
 
     //execute function
-    if(1){
+    if(0){
         struct _FaceInfo faces;
 //        cout << "xxx" << sizeof(faces) << endl;
         faces = face_detecting(&detector);

@@ -1,9 +1,13 @@
 # Face-Recognition-Cpp
 
+### Introduction
+
 - Detect: Fast-MTCNN
 - Verification: MobileFaceNet + Arcface
 
-### **Set up:**
+This project is using Fast-MTCNN for face detection and TVM inference model for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. 
+
+### Set up:
 
 - **Require OpenCV**
 
@@ -34,13 +38,25 @@ Now Linux users can replace the model files with those inside folder `model/linu
 
   `modify the TVM path into your own `
 
-- **Prefix:** set the prefix path to your own
+- **Prefix:** set the prefix model path to your own.
 
-- **Recording ground truth:**`mkdir img` and set record to `1`
+- **Recording ground truth:**`mkdir img` and set record to `1` to record ground truth image for face recognition.
 
 ---
 
-### **Output Structure:**
+### Run:
+
+Run the project may activate your camera to capture images.
+
+```shell
+mkdir build
+cd build
+cmake ..
+make -j4
+./FaceRecognitionCpp
+```
+
+### Output Structure:
 
 ```c++
 struct _FaceInfo {
