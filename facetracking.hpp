@@ -18,12 +18,12 @@ using namespace cv;
 // Tunable Parameters
 const int avg_face = 1;
 const int minSize = 60;
-const int stage = 4;
+const int stage = 3;
 const float factor = 0.709f;
 //const cv::Size frame_size = Size(1280,760);
-const cv::Size frame_size = Size(320,240);
-const string prefix = "/Users/marksonzhang/Project/FaceRecognitionCpp/models/macos";
-const char arcface_model[30] = "y1-arcface-emore_115";
+const cv::Size frame_size = Size(640,480);
+const string prefix = "/Users/marksonzhang/Project/FaceRecognitionCpp/models/macos_auto";
+const char arcface_model[30] = "y1-arcface-emore_109";
 
 const extern class MTCNN;
 

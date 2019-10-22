@@ -7,6 +7,8 @@
 
 This project is using Fast-MTCNN for face detection and TVM inference model for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. 
 
+![output](assets/output.gif)
+
 ### Set up:
 
 - **Require OpenCV**
