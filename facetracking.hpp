@@ -28,11 +28,21 @@ const char arcface_model[30] = "y1-arcface-emore_109";
 const extern class MTCNN;
 
 struct _FaceInfo{
+    /**
+     * Structure _FaceInfo
+     * face_count: the count of total face
+     * face_details: the [confidence, x, y, w, h, eyes, nose, cheek] coordinators
+     */
     int face_count;
     std::vector<std::array<double, 15>> face_details;
 //    double face_details[][15];
 };
 
+
+/**
+ * Class of TVM model implementation, it contains the model definition module and the inference function.
+ * the inference function is the forward
+ */
 class FR_MFN_Deploy{
 private:
     void * handle;

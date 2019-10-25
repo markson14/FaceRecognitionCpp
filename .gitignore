@@ -72,3 +72,5 @@ img/
 .idea/
 models/macos_int8
 models/macos_relay
+
+*.mp4

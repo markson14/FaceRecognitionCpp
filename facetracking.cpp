@@ -19,6 +19,10 @@ using namespace std;
 using namespace cv;
 
 Mat Zscore(const Mat &fc) {
+    /**
+     * This is a normalize function before calculating the cosine distance. Experiment has proven it can destory the
+     * original distribution in order to make two feature more distinguishable.
+     */
     Mat mean, std;
     meanStdDev(fc, mean, std);
 //    cout << mean << std << endl;
@@ -29,8 +33,9 @@ Mat Zscore(const Mat &fc) {
 
 
 inline float CosineDistance(const cv::Mat &v1, const cv::Mat &v2) {
-
-//    return static_cast<float>(v1.dot(v2));
+    /**
+     * This module is using to computing the cosine distance between input feature and ground truth feature
+     */
     double dot = v1.dot(v2);
     double denom_v1 = norm(v1);
     double denom_v2 = norm(v2);
@@ -68,6 +73,16 @@ struct _FaceInfo writestruct(vector<FaceInfo> &faceInfo) {
 }
 
 int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
+    /**
+     * Face Recognition pipeline using camera. Firstly, it will use MTCNN face detector to detect the faces [x,y,w,h] and [eyes, nose, cheeks] landmarks
+     * Then, face alignment will be implemented for wraping the face into decided center point as possible as we can. Finally, the aligned
+     * face will be sent into TVM-mobilefacenet-arcface model and output the feature of aligned face which will be compared with the ground
+     * truth face we have set in advanced. The similarity score will be output at the imshow windows.
+     *
+     * Args:
+     *      &detector: Address of loaded MTCNN model
+     *      &deploy: Address of loaed TVM model
+     */
 
     //OpenCV Version
     cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
@@ -134,7 +149,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
     memcpy(src.data, v1, 2 * 5 * sizeof(float));
 
     double score;
-    while (cap.isOpened() && out.isOpened()) {
+    while (cap.isOpened()) {
         count++;
         double t = (double) cv::getTickCount();
         cap >> frame;
@@ -151,7 +166,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
             int h = (int) (faceInfo[i].bbox.ymax - faceInfo[i].bbox.ymin + 1);
             cv::rectangle(result_cnn, cv::Rect(x, y, w, h), cv::Scalar(0, 0, 255), 2);
 
-             Perspective Transformation
+            // Perspective Transformation
             float v2[5][2] =
                     {{faceInfo[i].landmark[0], faceInfo[i].landmark[1]},
                      {faceInfo[i].landmark[2], faceInfo[i].landmark[3]},
@@ -166,12 +181,11 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
             cv::Mat aligned = frame.clone();
             cv::warpPerspective(frame, aligned, m, cv::Size(96, 112), INTER_LINEAR);
             resize(aligned, aligned, Size(112, 112), 0, 0, INTER_LINEAR);
-            if (0){
+            if (0) {
                 imshow("aligned face", aligned);
             }
-//            cvtColor(aligned,aligned,COLOR_BGR2RGB);
 
-            //Set 1 to record faces
+            // TODO: remember to set it to 1 before using this pipeline. This will get the ground truth image of your face for further calculating.
             if (0) {
                 imwrite("/Users/marksonzhang/Project/FaceRecognitionCpp/" + format("img/zzw_%d.jpg", count), aligned);
                 waitKey(0);

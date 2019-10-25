@@ -321,6 +321,8 @@ vector<FaceInfo> MTCNN::ProposalNet(const cv::Mat& img, int minSize, float thres
     float scale = 12.f / minSize;
     float minWH = std::min(height, width) *scale;
     std::vector<float> scales;
+
+    // image pyramid input
     while (minWH >= 12) {
         scales.push_back(scale);
         minWH *= factor;
