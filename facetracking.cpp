@@ -78,7 +78,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
      * Then, face alignment will be implemented for wraping the face into decided center point as possible as we can. Finally, the aligned
      * face will be sent into TVM-mobilefacenet-arcface model and output the feature of aligned face which will be compared with the ground
      * truth face we have set in advanced. The similarity score will be output at the imshow windows.
-     *
+     * -------
      * Args:
      *      &detector: Address of loaded MTCNN model
      *      &deploy: Address of loaed TVM model

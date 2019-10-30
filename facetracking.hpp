@@ -25,8 +25,6 @@ const cv::Size frame_size = Size(640,480);
 const string prefix = "/Users/marksonzhang/Project/FaceRecognitionCpp/models/macos_auto";
 const char arcface_model[30] = "y1-arcface-emore_109";
 
-const extern class MTCNN;
-
 struct _FaceInfo{
     /**
      * Structure _FaceInfo
@@ -38,7 +36,7 @@ struct _FaceInfo{
 //    double face_details[][15];
 };
 
-
+class MTCNN;
 /**
  * Class of TVM model implementation, it contains the model definition module and the inference function.
  * the inference function is the forward
