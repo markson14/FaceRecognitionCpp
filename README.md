@@ -2,16 +2,21 @@
 
 ### Introduction
 
-- Detect: Fast-MTCNN
+- Detect: [Fast-MTCNN](https://github.com/imistyrain/MTCNN/tree/master/Fast-MTCNN)
 - Verification: MobileFaceNet + Arcface
 
-This project is using Fast-MTCNN for face detection and TVM inference model for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. 
+This project is using **Fast-MTCNN** for face detection and **TVM inference model** for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. The recognition pipeline can run 50FPS on CPU **(2.8 GHz Quad-Core Intel Core i7)**.
 
 ![output](assets/output.gif)
 
+### Dependency:
+
+- OpenCV >= 3.4.1
+- TVM
+
 ### Set up:
 
-- **Require OpenCV**
+- **OpenCV**
 
 ```shell
 brew install opencv
@@ -20,7 +25,7 @@ brew install pkg-config
 pkg-config --cflags --libs /usr/local/Cellar/opencv/<version_number>/lib/pkgconfig/opencv.pc
 ```
 
-- **Require [TVM](https://docs.tvm.ai/install/from_source.html#python-package-installation)**
+- **[TVM](https://docs.tvm.ai/install/from_source.html#python-package-installation)**
 
 ```shell
 git clone --recursive https://github.com/dmlc/tvm
@@ -32,9 +37,9 @@ cmake ..
 make -j4
 ```
 
-- **About the .os file**
+- **tvm_complier**
 
-Now Linux users can replace the model files with those inside folder `model/linux`
+  Now you are able create your own .so file by using pretrained MXNet models on your own environment. Here I am using mobilefacenet-arcface model as face recognition backbone.
 
 - **CMakeList.txt**
 
