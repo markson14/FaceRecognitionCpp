@@ -1,8 +1,26 @@
 # Face-Recognition-Cpp
 
+### :fire: Updates:
+
+#### 2019.10.31
+
+- Add RetinaFace TVM module as face detector, the bboxes and pts are much stabler than MTCNNs'
+- Ablation Experiment
+
+|      Backbone      |  Size   |     FPS     | Average Cosine Simi |
+| :----------------: | :-----: | :---------: | :-----------------: |
+|     **MTCNN**      | 640x480 | **31.7331** |      80.8787%       |
+| **RetinaFace-TVM** | 640x480 |   20.9007   |    **87.8968%**     |
+
+
+
+---
+
 ### Introduction
 
-- Detect: [Fast-MTCNN](https://github.com/imistyrain/MTCNN/tree/master/Fast-MTCNN)
+- Detect:
+  - [Optional] [Fast-MTCNN](https://github.com/imistyrain/MTCNN/tree/master/Fast-MTCNN)
+  - [Default] [RetinaFace-TVM](https://github.com/Howave/RetinaFace-TVM)
 - Verification: MobileFaceNet + Arcface
 
 This project is using **Fast-MTCNN** for face detection and **TVM inference model** for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. The recognition pipeline can run 50FPS on CPU **(2.8 GHz Quad-Core Intel Core i7)**.
@@ -63,21 +81,6 @@ make -j4
 ./FaceRecognitionCpp
 ```
 
-### Output Structure:
-
-```c++
-struct _FaceInfo {
-    int face_count;
-    double face_details[][15];
-} faceinfo;
-```
-
-Score port: 0
-
-Bbox port: 1~5
-
-Landmark port: 6~14
-
 ---
 
 ### **Tun-able Parameters：**
@@ -88,11 +91,10 @@ Landmark port: 6~14
 4. **Stage:** set how many stage for MTCNN to implement.
 5. **Average Faces:** default 1 
 
-
-
 ### #TODO
 
-- Quantize arcface model
+- [ ] Quantize ArcFace
+- [ ] Quantize RetinaFace
 
 ---
 
@@ -102,6 +104,11 @@ Landmark port: 6~14
 @inproceedings{imistyrain2018MTCNN,
 title={Fast-MTCNN https://github.com/imistyrain/MTCNN/tree/master/Fast-MTCNN},
 author={Jack Yu},
+}
+
+@inproceedings{RetinaFace-TVM,
+title={RetinaFace-TVM https://github.com/Howave/RetinaFace-TVM},
+author={Howave},
 }
 
 @inproceedings{deng2019retinaface,

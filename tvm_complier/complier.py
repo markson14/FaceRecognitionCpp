@@ -1,15 +1,12 @@
-import numpy as np
-import tvm
-from tvm import relay
 import mxnet as mx
-from mxnet import ndarray as nd
-from mxnet.contrib.quantization import quantize_model
-import nnvm
-import json
+import tvm
+import tvm.relay as relay
+import numpy as np
+from tvm.contrib import util
+import os
 
-MODEL = "mnet.25"
-PREFIX, EPOCH = "../models/%s/mnet.25" % (MODEL), 0
-SIZE = (320, 320)
+PREFIX, EPOCH = "./model/mnet.25", 0
+SIZE = (480, 640)
 
 
 def main():
@@ -24,19 +21,26 @@ def main():
     # better than "llvm" on MacOS
     target = tvm.target.create("llvm -mcpu=haswell")
 
-    nnvm_sym, nnvm_params = nnvm.frontend.from_mxnet(
-        sym, arg_params, aux_params)
-    with nnvm.compiler.build_config(opt_level=opt_level):
-        graph, lib, params = nnvm.compiler.build(
-            nnvm_sym, target, shape_dict, params=nnvm_params)
+    relay_sym, relay_params = relay.frontend.from_mxnet(
+        symbol=sym,
+        shape=shape_dict,
+        dtype="float32",
+        arg_params=arg_params,
+        aux_params=aux_params)
+    with relay.build_config(opt_level=opt_level):
+        graph, lib, params = relay.build(
+            relay_sym,
+            target,
+            params=relay_params)
     print(type(graph), type(lib), type(params))
-    lib.export_library("./deploy_lib_%s_%d.so" % (MODEL, EPOCH))
+    lib.export_library("./mnet.25.x86.cpu.so")
     print('lib export succeefully')
-    with open("./deploy_graph_%s_%d.json" % (MODEL, EPOCH), "w") as fo:
-        fo.write(graph.json())
-    with open("./deploy_param_%s_%d.params" % (MODEL, EPOCH), "wb") as fo:
-        fo.write(nnvm.compiler.save_param_dict(params))
+    with open("./mnet.25.x86.cpu.json", "w") as fo:
+        fo.write(graph)
+    with open("./mnet.25.x86.cpu.params", "wb") as fo:
+        fo.write(relay.save_param_dict(params))
 
 
-if if __name__ == "__main__":
+if __name__ == "__main__":
     main()
+    print("-------------convert done!!!-------------")

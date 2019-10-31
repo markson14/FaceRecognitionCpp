@@ -17,9 +17,16 @@ INCLUDE_DIRECTORIES(${HOME_TVM}/include)
 INCLUDE_DIRECTORIES(${HOME_TVM}/3rdparty/dmlc-core/include)
 INCLUDE_DIRECTORIES(${HOME_TVM}/3rdparty/dlpack/include)
 
-ADD_LIBRARY(facedetect  include/mtcnn_opencv.cpp
+ADD_LIBRARY(facedetect  include/MTCNN/mtcnn_opencv.cpp
                         include/FacePreprocess.h
-        		        include/mtcnn_opencv.hpp
+        		        include/MTCNN/mtcnn_opencv.hpp
+						include/RetinaFace/anchor_generator.cpp
+						include/RetinaFace/anchor_generator.h
+						include/RetinaFace/config.cpp
+						include/RetinaFace/config.h
+						include/RetinaFace/tools.cpp
+						include/RetinaFace/tools.h
+						include/RetinaFace/ulsMatF.h
                         facetracking.cpp
                         facetracking.hpp)
 
