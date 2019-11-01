@@ -25,7 +25,7 @@
 
 This project is using **Fast-MTCNN** for face detection and **TVM inference model** for face recognition. At the face detection stage, the the module will output the `x,y,w,h` coordinations as well as `5` facial landmarks for further alignment. At the face recognition stage, the `112x112` image crop by the first stage output will be the second stage input. The output will be an `1x128` feature vector for cosine similarity measuring. The recognition pipeline can run 50FPS on CPU **(2.8 GHz Quad-Core Intel Core i7)**.
 
-![output](assets/output.gif)
+![output](assets/demo.gif)
 
 ### Dependency:
 
