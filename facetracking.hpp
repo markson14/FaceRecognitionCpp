@@ -1,5 +1,5 @@
 //
-// Created by markson zhang on 2019-07-17.
+// Created by markson zhang on 2019-03-20.
 //
 #include <iostream>
 #include <stdio.h>
@@ -72,7 +72,7 @@ class MTCNN;
  */
 class FR_MFN_Deploy {
 private:
-    void *handle;
+    std::unique_ptr<tvm::runtime::Module> handle;
 
 public:
     FR_MFN_Deploy(std::string modelFolder) {
@@ -87,7 +87,7 @@ public:
         // get global function module for graph runtime
         tvm::runtime::Module mod = (*tvm::runtime::Registry::Get("tvm.graph_runtime.create"))(json_data, mod_syslib,
                                                                                               device_type, device_id);
-        this->handle = new tvm::runtime::Module(mod);
+        this->handle.reset(new tvm::runtime::Module(mod));
         //load param
         std::ifstream params_in(modelFolder + format("/deploy_param_%s.params", arcface_model), std::ios::binary);
         std::string params_data((std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
@@ -114,7 +114,7 @@ public:
         const int64_t in_shape[in_ndim] = {1, 3, 112, 112};
         TVMArrayAlloc(in_shape, in_ndim, dtype_code, dtype_bits, dtype_lanes, device_type, device_id, &input);//
         TVMArrayCopyFromBytes(input, tensor.data, 112 * 3 * 112 * 4);
-        tvm::runtime::Module *mod = (tvm::runtime::Module *) handle;
+        tvm::runtime::Module *mod = (tvm::runtime::Module *) handle.get();
         tvm::runtime::PackedFunc set_input = mod->GetFunction("set_input");
         set_input("data", input);
         tvm::runtime::PackedFunc run = mod->GetFunction("run");
@@ -135,7 +135,7 @@ public:
 
 class RetinaFaceDeploy {
 private:
-    void *handle;
+    std::unique_ptr<tvm::runtime::Module> handle;
 
 public:
     RetinaFaceDeploy(std::string modelFolder) {
@@ -155,7 +155,7 @@ public:
         // get global function module for graph runtime
         tvm::runtime::Module mod = (*tvm::runtime::Registry::Get("tvm.graph_runtime.create"))(json_data, mod_syslib,
                                                                                               device_type, device_id);
-        this->handle = new tvm::runtime::Module(mod);
+        this->handle.reset(new tvm::runtime::Module(mod));
         // parameters in binary
         std::ifstream params_in(modelFolder + "/mnet.25.x86.cpu.params", std::ios::binary);
         std::string params_data((std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
@@ -186,7 +186,7 @@ public:
                 in_h / 32.0), h2 = ceil(in_h / 16.0), h3 = ceil(in_h / 8.0);
         int out_num = (w1 * h1 + w2 * h2 + w3 * h3) * (4 + 8 + 20);
 
-        tvm::runtime::Module *mod = (tvm::runtime::Module *) handle;
+        tvm::runtime::Module *mod = (tvm::runtime::Module *) handle.get();
 
         int total_input = 3 * in_w * in_h;
         float *data_x = (float *) malloc(total_input * sizeof(float));

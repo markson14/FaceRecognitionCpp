@@ -1,10 +1,6 @@
 import mxnet as mx
 import tvm
 import tvm.relay as relay
-import numpy as np
-from tvm.contrib import util
-import os
-
 PREFIX, EPOCH = "./model/mnet.25", 0
 SIZE = (480, 640)
 
@@ -20,7 +16,6 @@ def main():
     # "target" means your target platform you want to compile.
     # better than "llvm" on MacOS
     target = tvm.target.create("llvm -mcpu=haswell")
-
     relay_sym, relay_params = relay.frontend.from_mxnet(
         symbol=sym,
         shape=shape_dict,
