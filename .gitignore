@@ -74,3 +74,6 @@ models/macos_int8
 models/macos_relay
 build/
 *.mp4
+.vscode
+test/
+.ipynb_checkpoints
