@@ -2,6 +2,10 @@
 
 ### :fire: Updates:
 
+#### 2020.01.09
+
+- Add Edge-distance detection && face angle for extensional usage
+
 #### 2019.10.31
 
 - Add RetinaFace TVM module as face detector, the bboxes and pts are much stabler than MTCNNs'
