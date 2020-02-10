@@ -112,6 +112,9 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
         return -1;
     }
 
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 360);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 640);
+
     double fps, current;
     char string[10];
     char buff[10];
@@ -132,15 +135,21 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
 
     double score, angle, padding;
     vector<double> angle_list;
-    while (count < 500) {
+    while (count < 1000) {
         count++;
         double t = (double) cv::getTickCount();
         cap >> frame;
+
+        cerr << "height  " << frame.rows << "  width  " << frame.cols << endl;
+        cerr << "height  " << frame.size().height << "  width  " << frame.size().width << endl;
+        cv::imshow("origin", frame);
         //TODO: input image down here!!!!!!
 //        frame = cv::imread(format("/Users/marksonzhang/Downloads/fail_imgs/k%d.png", count - 1));
-
         resize(frame, frame, frame_size, 0.5, 0.5, INTER_LINEAR);
         Mat result_cnn = frame.clone();
+        cerr << "result_cnn height  " << result_cnn.rows << " result_cnn width  " << result_cnn.cols << endl;
+        cerr << "result_cnn height  " << result_cnn.size().height << " result_cnn width  " << result_cnn.size().width
+             << endl;
         vector<FaceInfo> faceInfo = detector.Detect_mtcnn(frame, minSize, threshold, factor, stage);
         for (int i = 0; i < faceInfo.size(); i++) {
             cout << faceInfo[i].bbox.score << endl;
@@ -168,7 +177,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
             // compute angle
             angle = count_angle(v2);
             angle_list.push_back(angle);
-            cout << "INFO：Angle  " << angle <<  endl;
+            cout << "INFO：Angle  " << angle << endl;
 
             cv::Mat dst(5, 2, CV_32FC1, v2);
             memcpy(dst.data, v2, 2 * 5 * sizeof(float));
@@ -241,11 +250,9 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
     cout << "average score: " << sum_score / (float) count << endl;
 
 
-    ofstream output("/Users/marksonzhang/Project/Face-Recognition-Cpp/angle_list_rotate.txt");
-    if (output.is_open())
-    {
-        for (int j = 0; angle_list.size() > j; j++)
-        {
+    ofstream output("/Users/marksonzhang/Project/Face-Recognition-Cpp/test/angle_list_rotate.txt");
+    if (output.is_open()) {
+        for (int j = 0; angle_list.size() > j; j++) {
             output << angle_list[j];
             output << "\n";
         }
@@ -315,7 +322,7 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
     memcpy(src.data, v1, 2 * 5 * sizeof(float));
 
     double score, angle;
-    while (count <= 500) {
+    while (count <= 50000) {
         count++;
         double t = (double) cv::getTickCount();
         cap >> frame;
@@ -323,22 +330,24 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
         Mat result_cnn = frame.clone();
         RetinaOutput output_ = deploy_track.forward(frame);
         vector<Anchor> faceInfo = output_.result;
-        int ratio_x = output_.ratio.x;
-        int ratio_y = output_.ratio.y;
+        float ratio_x = output_.ratio.x;
+        float ratio_y = output_.ratio.y;
+        cout << ratio_x << "  " << ratio_y << endl;
         for (int i = 0; i < faceInfo.size(); i++) {
             int x = (int) faceInfo[i].finalbox.x * ratio_x;
             int y = (int) faceInfo[i].finalbox.y * ratio_y;
             int w = (int) faceInfo[i].finalbox.width * ratio_x;
             int h = (int) faceInfo[i].finalbox.height * ratio_y;
             cv::rectangle(result_cnn, Point(x, y), Point(w, h), cv::Scalar(0, 0, 255), 2);
-
+            cv::circle(result_cnn, Point(x, y), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
+            cv::circle(result_cnn, Point(w, h), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
             // Perspective Transformation
             float v2[5][2] =
-                    {{faceInfo[i].pts[0].x, faceInfo[i].pts[0].y},
-                     {faceInfo[i].pts[1].x, faceInfo[i].pts[1].y},
-                     {faceInfo[i].pts[2].x, faceInfo[i].pts[2].y},
-                     {faceInfo[i].pts[3].x, faceInfo[i].pts[3].y},
-                     {faceInfo[i].pts[4].x, faceInfo[i].pts[4].y},
+                    {{faceInfo[i].pts[0].x * ratio_x, faceInfo[i].pts[0].y * ratio_y},
+                     {faceInfo[i].pts[1].x * ratio_x, faceInfo[i].pts[1].y * ratio_y},
+                     {faceInfo[i].pts[2].x * ratio_x, faceInfo[i].pts[2].y * ratio_y},
+                     {faceInfo[i].pts[3].x * ratio_x, faceInfo[i].pts[3].y * ratio_y},
+                     {faceInfo[i].pts[4].x * ratio_x, faceInfo[i].pts[4].y * ratio_y},
                     };
 
             // compute angle
@@ -372,16 +381,16 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
             fc2 = Zscore(fc2);
             current = CosineDistance(fc1, fc2);
 
-            cerr << "Inference score: " << current << endl;
+//            cerr << "Inference score: " << current << endl;
             sum_score += current;
 
             for (int j = 0; j < faceInfo[i].pts.size(); ++j) {
                 if (j == 0 or j == 3) {
-                    cv::circle(result_cnn, faceInfo[i].pts[j], 3,
+                    cv::circle(result_cnn, Point(faceInfo[i].pts[j].x * ratio_x, faceInfo[i].pts[j].y * ratio_y), 3,
                                Scalar(0, 255, 0),
                                FILLED, LINE_AA);
                 } else {
-                    cv::circle(result_cnn, faceInfo[i].pts[j], 3,
+                    cv::circle(result_cnn, Point(faceInfo[i].pts[j].x * ratio_x, faceInfo[i].pts[j].y * ratio_y), 3,
                                Scalar(0, 0, 255),
                                FILLED, LINE_AA);
                 }

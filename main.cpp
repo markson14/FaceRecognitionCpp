@@ -14,6 +14,7 @@ int main() {
     FR_MFN_Deploy deploy_rec(prefix);
     RetinaFaceDeploy deploy_track(prefix);
     MTCNN detector(prefix);
+
     MTCNNTracking(detector, deploy_rec);
 //    RetinaFaceTracking(deploy_track, deploy_rec);
 

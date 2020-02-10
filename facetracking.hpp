@@ -42,8 +42,11 @@ using namespace cv;
 const int avg_face = 1;
 const int minSize = 60;
 const int stage = 4;
-//const cv::Size frame_size = Size(1280,760);
-const cv::Size frame_size = Size(640, 480);
+const int input_width = 1280;
+const int input_height = 960;
+const cv::Size frame_size = Size(input_width, input_height);
+const float ratio_x = input_width / 640.;
+const float ratio_y = input_height / 480.;
 const string prefix = "/Users/marksonzhang/Project/Face-Recognition-Cpp/models/macos";
 const char arcface_model[30] = "y1-arcface-emore_115";
 
@@ -60,7 +63,7 @@ struct _FaceInfo {
 
 struct RetinaOutput {
     std::vector<Anchor> result;
-    cv::Point ratio;
+    cv::Point2f ratio;
 };
 
 
@@ -178,7 +181,6 @@ public:
         DLTensor *x;
         int in_ndim = 4;
         int in_c = 3, in_h = 480, in_w = 640;
-        int ratio_x = 1, ratio_y = 1;
         int64_t in_shape[4] = {1, in_c, in_h, in_w};
         TVMArrayAlloc(in_shape, in_ndim, dtype_code, dtype_bits, dtype_lanes, device_type, device_id, &x);
 
