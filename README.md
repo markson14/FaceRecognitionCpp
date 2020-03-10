@@ -2,6 +2,10 @@
 
 ### :fire: Updates:
 
+#### 2020.03.10
+
+- Make Face Detection(MTCNN & RetinaFace) as an individual function to call.
+
 #### 2020.01.09
 
 - Add Edge-distance detection && face angle for extensional usage

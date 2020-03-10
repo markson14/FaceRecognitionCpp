@@ -42,8 +42,8 @@ using namespace cv;
 const int avg_face = 1;
 const int minSize = 60;
 const int stage = 4;
-const int input_width = 1280;
-const int input_height = 960;
+const int input_width = 112;
+const int input_height = 112;
 const cv::Size frame_size = Size(input_width, input_height);
 const float ratio_x = input_width / 640.;
 const float ratio_y = input_height / 480.;
@@ -289,3 +289,5 @@ public:
 
 int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy);
 int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec);
+int RetinaFace(RetinaFaceDeploy &deploy_track);
+int MTCNNDetection(MTCNN &detector);

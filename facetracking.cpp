@@ -112,9 +112,6 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
         return -1;
     }
 
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 360);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 640);
-
     double fps, current;
     char string[10];
     char buff[10];
@@ -249,15 +246,6 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
     cout << "average fps: " << sum_fps / (float) count << endl;
     cout << "average score: " << sum_score / (float) count << endl;
 
-
-    ofstream output("/Users/marksonzhang/Project/Face-Recognition-Cpp/test/angle_list_rotate.txt");
-    if (output.is_open()) {
-        for (int j = 0; angle_list.size() > j; j++) {
-            output << angle_list[j];
-            output << "\n";
-        }
-    }
-    output.close();
 }
 
 int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec) {
@@ -425,3 +413,224 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
     return 0;
 }
 
+/**
+ * Face Detection pipeline using camera. Instead, the model is using RetinaFace-TVM.
+ * -------
+ * Args:
+ *      &deploy_track: Address of loaded RetinaFace-TVM model
+ */
+int RetinaFace(RetinaFaceDeploy &deploy_track) {
+    //OpenCV Version
+    cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
+         << CV_MINOR_VERSION << "."
+         << CV_SUBMINOR_VERSION << endl;
+
+    clock_t start, end;
+    //TVM
+    Mat faces, face_avg;
+    vector<Mat> face_list;
+
+
+    int count = 0;
+    VideoCapture cap(0); //using camera capturing
+    if (!cap.isOpened()) {
+        cerr << "nothing" << endl;
+        return -1;
+    }
+    double fps, current;
+    char string[10];
+    char buff[10];
+    Mat frame;
+
+    double score, angle;
+    while (count <= 50000) {
+        count++;
+        double t = (double) cv::getTickCount();
+        cap >> frame;
+        resize(frame, frame, frame_size, 0.5, 0.5, INTER_LINEAR);
+        Mat result_cnn = frame.clone();
+        RetinaOutput output_ = deploy_track.forward(frame);
+        vector<Anchor> faceInfo = output_.result;
+        float ratio_x = output_.ratio.x;
+        float ratio_y = output_.ratio.y;
+        cout << ratio_x << "  " << ratio_y << endl;
+        for (int i = 0; i < faceInfo.size(); i++) {
+            int x = (int) faceInfo[i].finalbox.x * ratio_x;
+            int y = (int) faceInfo[i].finalbox.y * ratio_y;
+            int w = (int) faceInfo[i].finalbox.width * ratio_x;
+            int h = (int) faceInfo[i].finalbox.height * ratio_y;
+            cv::rectangle(result_cnn, Point(x, y), Point(w, h), cv::Scalar(0, 0, 255), 2);
+            cv::circle(result_cnn, Point(x, y), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
+            cv::circle(result_cnn, Point(w, h), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
+            // Perspective Transformation
+            float v2[5][2] =
+                    {{faceInfo[i].pts[0].x * ratio_x, faceInfo[i].pts[0].y * ratio_y},
+                     {faceInfo[i].pts[1].x * ratio_x, faceInfo[i].pts[1].y * ratio_y},
+                     {faceInfo[i].pts[2].x * ratio_x, faceInfo[i].pts[2].y * ratio_y},
+                     {faceInfo[i].pts[3].x * ratio_x, faceInfo[i].pts[3].y * ratio_y},
+                     {faceInfo[i].pts[4].x * ratio_x, faceInfo[i].pts[4].y * ratio_y},
+                    };
+
+            // compute angle
+            angle = count_angle(v2);
+//            cerr << "inference cost: " << (double) (end - start) / CLOCKS_PER_SEC << endl;
+//            cerr << "Inference score: " << current << endl;
+            sum_score += current;
+
+            for (int j = 0; j < faceInfo[i].pts.size(); ++j) {
+                if (j == 0 or j == 3) {
+                    cv::circle(result_cnn, Point(faceInfo[i].pts[j].x * ratio_x, faceInfo[i].pts[j].y * ratio_y), 3,
+                               Scalar(0, 255, 0),
+                               FILLED, LINE_AA);
+                } else {
+                    cv::circle(result_cnn, Point(faceInfo[i].pts[j].x * ratio_x, faceInfo[i].pts[j].y * ratio_y), 3,
+                               Scalar(0, 0, 255),
+                               FILLED, LINE_AA);
+                }
+            }
+        }
+        t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
+        fps = 1.0 / t;
+        sum_fps += fps;
+        sprintf(string, "%.2f", fps);
+        std::string fpsString("FPS: ");
+        fpsString += string;
+        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        std::string framecount("Frame: ");
+        framecount += std::to_string(count);
+        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        std::string Angle("Angle: ");
+        Angle += to_string(angle);
+        putText(result_cnn, Angle, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        cv::imshow("image", result_cnn);
+        cv::waitKey(1);
+    }
+
+    return 0;
+}
+
+/**
+ * Face Recognition pipeline using camera. Firstly, it will use MTCNN face detector to detect the faces [x,y,w,h] and [eyes, nose, cheeks] landmarks
+ * Then, face alignment will be implemented for wraping the face into decided center point as possible as we can. Finally, the aligned
+ * face will be sent into TVM-mobilefacenet-arcface model and output the feature of aligned face which will be compared with the ground
+ * truth face we have set in advanced. The similarity score will be output at the imshow windows.
+ * -------
+ * Args:
+ *      &detector: Address of loaded MTCNN model
+ *      &deploy: Address of loaed TVM model
+ */
+int MTCNNDetection(MTCNN &detector) {
+
+    //OpenCV Version
+    cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
+         << CV_MINOR_VERSION << "."
+         << CV_SUBMINOR_VERSION << endl;
+
+    clock_t start, end;
+
+    int count = 0;
+    // MTCNN Parameters
+    float factor = 0.709f;
+    float threshold[3] = {0.7f, 0.6f, 0.6f};
+
+    VideoCapture cap(0); //using camera capturing
+    if (!cap.isOpened()) {
+        cerr << "nothing" << endl;
+        return -1;
+    }
+
+    double fps, current;
+    char string[10];
+    char buff[10];
+    Mat frame;
+
+    double score, angle, padding;
+    vector<double> angle_list;
+    while (count < 1000) {
+        count++;
+        double t = (double) cv::getTickCount();
+        cap >> frame;
+
+        cerr << "height  " << frame.rows << "  width  " << frame.cols << endl;
+        cerr << "height  " << frame.size().height << "  width  " << frame.size().width << endl;
+        cv::imshow("origin", frame);
+        //TODO: input image down here!!!!!!
+//        frame = cv::imread(format("/Users/marksonzhang/Downloads/fail_imgs/k%d.png", count - 1));
+        resize(frame, frame, frame_size, 0.5, 0.5, INTER_LINEAR);
+        Mat result_cnn = frame.clone();
+        cerr << "result_cnn height  " << result_cnn.rows << " result_cnn width  " << result_cnn.cols << endl;
+        cerr << "result_cnn height  " << result_cnn.size().height << " result_cnn width  " << result_cnn.size().width
+             << endl;
+        vector<FaceInfo> faceInfo = detector.Detect_mtcnn(frame, minSize, threshold, factor, stage);
+        for (int i = 0; i < faceInfo.size(); i++) {
+            cout << faceInfo[i].bbox.score << endl;
+        }
+        for (int i = 0; i < faceInfo.size(); i++) {
+            int x = (int) faceInfo[i].bbox.xmin;
+            int y = (int) faceInfo[i].bbox.ymin;
+            int w = (int) (faceInfo[i].bbox.xmax - faceInfo[i].bbox.xmin + 1);
+            int h = (int) (faceInfo[i].bbox.ymax - faceInfo[i].bbox.ymin + 1);
+            cv::rectangle(result_cnn, cv::Rect(x, y, w, h), cv::Scalar(0, 0, 255), 2);
+
+            // compute padding
+            padding = count_padding(faceInfo[i].bbox.xmin, faceInfo[i].bbox.ymin, faceInfo[i].bbox.xmax,
+                                    faceInfo[i].bbox.ymax, frame);
+
+            // Perspective Transformation
+            float v2[5][2] =
+                    {{faceInfo[i].landmark[0], faceInfo[i].landmark[1]},
+                     {faceInfo[i].landmark[2], faceInfo[i].landmark[3]},
+                     {faceInfo[i].landmark[4], faceInfo[i].landmark[5]},
+                     {faceInfo[i].landmark[6], faceInfo[i].landmark[7]},
+                     {faceInfo[i].landmark[8], faceInfo[i].landmark[9]},
+                    };
+            current = faceInfo[i].bbox.score;
+            // compute angle
+            angle = count_angle(v2);
+            angle_list.push_back(angle);
+            cout << "INFO：Angle  " << angle << endl;
+
+            cv::Mat dst(5, 2, CV_32FC1, v2);
+            memcpy(dst.data, v2, 2 * 5 * sizeof(float));
+
+//            cerr << "Inference score: " << current << endl;
+            sum_score += current;
+
+            for (int j = 0; j < 10; j += 2) {
+                if (j == 0 or j == 6) {
+                    cv::circle(result_cnn, Point(faceInfo[i].landmark[j], faceInfo[i].landmark[j + 1]), 3,
+                               Scalar(0, 255, 0),
+                               FILLED, LINE_AA);
+                } else {
+                    cv::circle(result_cnn, Point(faceInfo[i].landmark[j], faceInfo[i].landmark[j + 1]), 3,
+                               Scalar(0, 0, 255),
+                               FILLED, LINE_AA);
+                }
+            }
+            score = faceInfo[i].bbox.score;
+        }
+//        cerr << score << endl;
+        t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
+        fps = 1.0 / t;
+        sum_fps += fps;
+        sprintf(string, "%.2f", fps);
+        std::string fpsString("FPS: ");
+        fpsString += string;
+        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        std::string framecount("Frame: ");
+        framecount += std::to_string(count);
+        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        std::string confidence("Confidence: ");
+        sprintf(buff, "%.2f", current);
+        confidence += buff;
+        putText(result_cnn, confidence, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        std::string Angle("Angle: ");
+        Angle += to_string(angle);
+        putText(result_cnn, Angle, cv::Point(5, 65), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+        cv::imshow("image", result_cnn);
+        cv::waitKey(1);
+    }
+    cout << "average fps: " << sum_fps / (float) count << endl;
+    cout << "average score: " << sum_score / (float) count << endl;
+
+}
