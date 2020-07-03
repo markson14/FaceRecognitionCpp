@@ -2,6 +2,11 @@
 
 ### :fire: Updates:
 
+#### 2020.07.03
+
+- Formatting Output Structure. Now your confidence score is shown at the top-left corner of your bbox
+- Add One time inference method [InferenceOnce](./facetracking.cpp) in facetracking.cpp
+
 #### 2020.03.10
 
 - Make Face Detection(MTCNN & RetinaFace) as an individual function to call.

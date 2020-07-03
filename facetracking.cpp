@@ -17,11 +17,11 @@ using namespace cv;
 
 double sum_score, sum_fps;
 
+/**
+ * This is a normalize function before calculating the cosine distance. Experiment has proven it can destory the
+ * original distribution in order to make two feature more distinguishable.
+ */
 Mat Zscore(const Mat &fc) {
-    /**
-     * This is a normalize function before calculating the cosine distance. Experiment has proven it can destory the
-     * original distribution in order to make two feature more distinguishable.
-     */
     Mat mean, std;
     meanStdDev(fc, mean, std);
 //    cout << mean << std << endl;
@@ -30,10 +30,10 @@ Mat Zscore(const Mat &fc) {
 
 }
 
+/**
+ * This module is using to computing the cosine distance between input feature and ground truth feature
+ */
 inline float CosineDistance(const cv::Mat &v1, const cv::Mat &v2) {
-    /**
-     * This module is using to computing the cosine distance between input feature and ground truth feature
-     */
     double dot = v1.dot(v2);
     double denom_v1 = norm(v1);
     double denom_v2 = norm(v2);
@@ -60,17 +60,29 @@ inline float count_padding(float xmin, float ymin, float xmax, float ymax, cv::M
     return min({xmin, ymin, xm2border, ym2border});
 }
 
+/**
+ * Formatting output structure
+ */
+inline cv::Mat draw_conclucion(String intro, double input, cv::Mat result_cnn, int position){
+    char string[10];
+    sprintf(string, "%.2f", input);
+    std::string introString(intro);
+    introString += string;
+    putText(result_cnn, introString, cv::Point(5, position), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+    return result_cnn;
+}
+
+/**
+ * Face Recognition pipeline using camera. Firstly, it will use MTCNN face detector to detect the faces [x,y,w,h] and [eyes, nose, cheeks] landmarks
+ * Then, face alignment will be implemented for wraping the face into decided center point as possible as we can. Finally, the aligned
+ * face will be sent into TVM-mobilefacenet-arcface model and output the feature of aligned face which will be compared with the ground
+ * truth face we have set in advanced. The similarity score will be output at the imshow windows.
+ * -------
+ * Args:
+ *      &detector: Address of loaded MTCNN model
+ *      &deploy: Address of loaed TVM model
+ */
 int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
-    /**
-     * Face Recognition pipeline using camera. Firstly, it will use MTCNN face detector to detect the faces [x,y,w,h] and [eyes, nose, cheeks] landmarks
-     * Then, face alignment will be implemented for wraping the face into decided center point as possible as we can. Finally, the aligned
-     * face will be sent into TVM-mobilefacenet-arcface model and output the feature of aligned face which will be compared with the ground
-     * truth face we have set in advanced. The similarity score will be output at the imshow windows.
-     * -------
-     * Args:
-     *      &detector: Address of loaded MTCNN model
-     *      &deploy: Address of loaed TVM model
-     */
 
     //OpenCV Version
     cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
@@ -117,7 +129,7 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
     char buff[10];
     Mat frame;
 
-
+q
     // gt face landmark
     float v1[5][2] = {
             {30.2946f, 51.6963f},
@@ -206,6 +218,9 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
 //            cerr << "Inference score: " << current << endl;
             sum_score += current;
 
+            sprintf(string, "%.4f", current);
+            cv::putText(result_cnn, string, Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.75, cv::Scalar(255, 255, 0));
+
             for (int j = 0; j < 10; j += 2) {
                 if (j == 0 or j == 6) {
                     cv::circle(result_cnn, Point(faceInfo[i].landmark[j], faceInfo[i].landmark[j + 1]), 3,
@@ -223,23 +238,12 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
         t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
         fps = 1.0 / t;
         sum_fps += fps;
-        sprintf(string, "%.2f", fps);
-        std::string fpsString("FPS: ");
-        fpsString += string;
-        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string framecount("Frame: ");
-        framecount += std::to_string(count);
-        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string confidence("Confidence: ");
-        sprintf(buff, "%.2f", current);
-        confidence += buff;
-        putText(result_cnn, confidence, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string avgface("Avg Face: ");
-        avgface += to_string(avg_face);
-        putText(result_cnn, avgface, cv::Point(5, 65), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string Angle("Angle: ");
-        Angle += to_string(angle);
-        putText(result_cnn, Angle, cv::Point(5, 80), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+
+        result_cnn = draw_conclucion("FPS: ", fps, result_cnn, 20);
+        result_cnn = draw_conclucion("Frame: ", count, result_cnn, 35);
+        result_cnn = draw_conclucion("Avg Face: ", avg_face, result_cnn, 65);
+        result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 80);
+
         cv::imshow("image", result_cnn);
         cv::waitKey(1);
     }
@@ -248,15 +252,15 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
 
 }
 
+/**
+ * Face Recognition pipeline using camera. Instead, the model is using RetinaFace-TVM, others remain the same
+ * as MTCNNTracking
+ * -------
+ * Args:
+ *      &deploy_track: Address of loaded RetinaFace-TVM model
+ *      &deploy_rec: Address of loaded MobileFaceNet-TVM model
+ */
 int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec) {
-    /**
-     * Face Recognition pipeline using camera. Instead, the model is using RetinaFace-TVM, others remain the same
-     * as MTCNNTracking
-     * -------
-     * Args:
-     *      &deploy_track: Address of loaded RetinaFace-TVM model
-     *      &deploy_rec: Address of loaded MobileFaceNet-TVM model
-     */
     //OpenCV Version
     cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
          << CV_MINOR_VERSION << "."
@@ -320,7 +324,7 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
         vector<Anchor> faceInfo = output_.result;
         float ratio_x = output_.ratio.x;
         float ratio_y = output_.ratio.y;
-        cout << ratio_x << "  " << ratio_y << endl;
+
         for (int i = 0; i < faceInfo.size(); i++) {
             int x = (int) faceInfo[i].finalbox.x * ratio_x;
             int y = (int) faceInfo[i].finalbox.y * ratio_y;
@@ -372,6 +376,9 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
 //            cerr << "Inference score: " << current << endl;
             sum_score += current;
 
+            sprintf(string, "%.4f", current);
+            cv::putText(result_cnn, string, Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.75, cv::Scalar(255, 255, 0));
+
             for (int j = 0; j < faceInfo[i].pts.size(); ++j) {
                 if (j == 0 or j == 3) {
                     cv::circle(result_cnn, Point(faceInfo[i].pts[j].x * ratio_x, faceInfo[i].pts[j].y * ratio_y), 3,
@@ -387,25 +394,16 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
         t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
         fps = 1.0 / t;
         sum_fps += fps;
-        sprintf(string, "%.2f", fps);
-        std::string fpsString("FPS: ");
-        fpsString += string;
-        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string framecount("Frame: ");
-        framecount += std::to_string(count);
-        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string confidence("Confidence: ");
-        sprintf(buff, "%.2f", current);
-        confidence += buff;
-        putText(result_cnn, confidence, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string avgface("Avg Face: ");
-        avgface += to_string(avg_face);
-        putText(result_cnn, avgface, cv::Point(5, 65), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string Angle("Angle: ");
-        Angle += to_string(angle);
-        putText(result_cnn, Angle, cv::Point(5, 80), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+
+        result_cnn = draw_conclucion("FPS: ", fps, result_cnn, 20);
+        result_cnn = draw_conclucion("Frame: ", count, result_cnn, 35);
+        result_cnn = draw_conclucion("Avg Face: ", avg_face, result_cnn, 50);
+        result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 65);
+
         cv::imshow("image", result_cnn);
         cv::waitKey(1);
+
+        cout << sum_score / (float) count << endl;
     }
 
     cout << "average fps: " << sum_fps / (float) count << endl;
@@ -492,16 +490,11 @@ int RetinaFace(RetinaFaceDeploy &deploy_track) {
         t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
         fps = 1.0 / t;
         sum_fps += fps;
-        sprintf(string, "%.2f", fps);
-        std::string fpsString("FPS: ");
-        fpsString += string;
-        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string framecount("Frame: ");
-        framecount += std::to_string(count);
-        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string Angle("Angle: ");
-        Angle += to_string(angle);
-        putText(result_cnn, Angle, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+
+        result_cnn = draw_conclucion("FPS: ", fps, result_cnn, 20);
+        result_cnn = draw_conclucion("Frame: ", count, result_cnn, 35);
+        result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 50);
+
         cv::imshow("image", result_cnn);
         cv::waitKey(1);
     }
@@ -613,24 +606,110 @@ int MTCNNDetection(MTCNN &detector) {
         t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
         fps = 1.0 / t;
         sum_fps += fps;
-        sprintf(string, "%.2f", fps);
-        std::string fpsString("FPS: ");
-        fpsString += string;
-        putText(result_cnn, fpsString, cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string framecount("Frame: ");
-        framecount += std::to_string(count);
-        putText(result_cnn, framecount, cv::Point(5, 35), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string confidence("Confidence: ");
-        sprintf(buff, "%.2f", current);
-        confidence += buff;
-        putText(result_cnn, confidence, cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-        std::string Angle("Angle: ");
-        Angle += to_string(angle);
-        putText(result_cnn, Angle, cv::Point(5, 65), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+
+        result_cnn = draw_conclucion("FPS: ", fps, result_cnn, 20);
+        result_cnn = draw_conclucion("Frame: ", count, result_cnn, 35);
+        result_cnn = draw_conclucion("Confidence: ", current, result_cnn, 50);
+        result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 65);
+
         cv::imshow("image", result_cnn);
         cv::waitKey(1);
     }
     cout << "average fps: " << sum_fps / (float) count << endl;
     cout << "average score: " << sum_score / (float) count << endl;
 
+}
+
+/**
+ * Face Recognition pipeline using camera. Instead, the model is using RetinaFace-TVM, others remain the same
+ * as MTCNNTracking
+ * -------
+ * Args:
+ *      &deploy_track: Address of loaded RetinaFace-TVM model
+ *      &deploy_rec: Address of loaded MobileFaceNet-TVM model
+ */
+int InferenceOnce(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec) {
+
+    String image_t, image_p;
+    cin >> image_t;
+    cin >> image_p;
+
+    clock_t start, end;
+    //TVM
+    Mat faces, face_avg;
+    vector<Mat> face_list;
+
+    faces = cv::imread(image_t);
+    resize(faces, faces, Size(112, 112), 0, 0, INTER_LINEAR);
+    face_avg = faces;
+
+    if (0) {
+        imshow("face average", face_avg);
+    }
+    Mat fc1 = deploy_rec.forward(face_avg);
+
+    fc1 = Zscore(fc1);
+
+    double current;
+    char string[10];
+    char buff[10];
+    Mat frame;
+
+    // gt face landmark
+    float v1[5][2] = {
+            {30.2946f, 51.6963f},
+            {65.5318f, 51.5014f},
+            {48.0252f, 71.7366f},
+            {33.5493f, 92.3655f},
+            {62.7299f, 92.2041f}};
+
+    cv::Mat src(5, 2, CV_32FC1, v1);
+
+    memcpy(src.data, v1, 2 * 5 * sizeof(float));
+
+    double score, angle;
+
+    frame = imread(image_p);
+    resize(frame, frame, frame_size, 0.5, 0.5, INTER_LINEAR);
+    Mat result_cnn = frame.clone();
+    RetinaOutput output_ = deploy_track.forward(frame);
+    vector<Anchor> faceInfo = output_.result;
+    float ratio_x = output_.ratio.x;
+    float ratio_y = output_.ratio.y;
+
+    for (int i = 0; i < faceInfo.size(); i++) {
+        int x = (int) faceInfo[i].finalbox.x * ratio_x;
+        int y = (int) faceInfo[i].finalbox.y * ratio_y;
+        int w = (int) faceInfo[i].finalbox.width * ratio_x;
+        int h = (int) faceInfo[i].finalbox.height * ratio_y;
+        cv::rectangle(result_cnn, Point(x, y), Point(w, h), cv::Scalar(0, 0, 255), 2);
+        cv::circle(result_cnn, Point(x, y), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
+        cv::circle(result_cnn, Point(w, h), 3, Scalar(255, 255, 0), FILLED, LINE_AA);
+        // Perspective Transformation
+        float v2[5][2] =
+                {{faceInfo[i].pts[0].x * ratio_x, faceInfo[i].pts[0].y * ratio_y},
+                 {faceInfo[i].pts[1].x * ratio_x, faceInfo[i].pts[1].y * ratio_y},
+                 {faceInfo[i].pts[2].x * ratio_x, faceInfo[i].pts[2].y * ratio_y},
+                 {faceInfo[i].pts[3].x * ratio_x, faceInfo[i].pts[3].y * ratio_y},
+                 {faceInfo[i].pts[4].x * ratio_x, faceInfo[i].pts[4].y * ratio_y},
+                };
+
+        // compute angle
+        angle = count_angle(v2);
+
+        cv::Mat dst(5, 2, CV_32FC1, v2);
+        memcpy(dst.data, v2, 2 * 5 * sizeof(float));
+
+        cv::Mat m = FacePreprocess::similarTransform(dst, src);
+        cv::Mat aligned = frame.clone();
+        cv::warpPerspective(frame, aligned, m, cv::Size(96, 112), INTER_LINEAR);
+        resize(aligned, aligned, Size(112, 112), 0, 0, INTER_LINEAR);
+
+        Mat fc2 = deploy_rec.forward(aligned);
+
+        // normalize
+        fc2 = Zscore(fc2);
+        current = CosineDistance(fc1, fc2);
+        cout << current << endl;
+    }
 }
