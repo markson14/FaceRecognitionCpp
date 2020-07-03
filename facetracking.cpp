@@ -63,7 +63,7 @@ inline float count_padding(float xmin, float ymin, float xmax, float ymax, cv::M
 /**
  * Formatting output structure
  */
-inline cv::Mat draw_conclucion(String intro, double input, cv::Mat result_cnn, int position){
+inline cv::Mat draw_conclucion(String intro, double input, cv::Mat result_cnn, int position) {
     char string[10];
     sprintf(string, "%.2f", input);
     std::string introString(intro);
@@ -129,7 +129,6 @@ int MTCNNTracking(MTCNN &detector, FR_MFN_Deploy &deploy) {
     char buff[10];
     Mat frame;
 
-q
     // gt face landmark
     float v1[5][2] = {
             {30.2946f, 51.6963f},
@@ -270,10 +269,14 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
     //TVM
     Mat faces, face_avg;
     vector<Mat> face_list;
-    for (int i = 1; i <= avg_face; i++) {
-        faces = imread("/Users/marksonzhang/Project/Face-Recognition-Cpp/" + format("img/zzw_%d_retina.jpg", i));
-//        GaussianBlur(faces,faces,Size( 3, 3 ), 0, 0);
-//        sharpen(faces,faces);
+    if (0) {
+        for (int i = 1; i <= avg_face; i++) {
+            faces = imread("/Users/marksonzhang/Project/Face-Recognition-Cpp/" + format("img/zzw_%d_retina.jpg", i));
+            resize(faces, faces, Size(112, 112), 0, 0, INTER_LINEAR);
+            face_list.push_back(faces);
+        }
+    } else {
+        faces = imread("/Users/marksonzhang/Project/Face-Recognition-Cpp/img/fr_retina.jpg");
         resize(faces, faces, Size(112, 112), 0, 0, INTER_LINEAR);
         face_list.push_back(faces);
     }
@@ -295,6 +298,12 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
         cerr << "nothing" << endl;
         return -1;
     }
+    int frame_width = cap.get(CAP_PROP_FRAME_WIDTH);
+    int frame_height = cap.get(CAP_PROP_FRAME_HEIGHT);
+
+//    VideoWriter video;
+//    video.open("/Users/marksonzhang/Movies/outcpp.avi", cv::VideoWriter::fourcc('M','J','P','G'), cap.get(cv::CAP_PROP_FPS), Size(frame_width, frame_height), true);
+
     double fps, current;
     char string[10];
     char buff[10];
@@ -358,7 +367,7 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
 
             // TODO: remember to set it to 1 before using this pipeline. This will get the ground truth image of your face for further calculating.
             if (0) {
-                imwrite("/Users/marksonzhang/Project/Face-Recognition-Cpp/" + format("img/zzw_%d_retina.jpg", count),
+                imwrite("/Users/marksonzhang/Project/Face-Recognition-Cpp/" + format("img/fr_%d_retina.jpg", count),
                         aligned);
                 imshow("crop face", aligned);
                 waitKey(0);
@@ -400,14 +409,20 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
         result_cnn = draw_conclucion("Avg Face: ", avg_face, result_cnn, 50);
         result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 65);
 
+//        video << result_cnn;
         cv::imshow("image", result_cnn);
         cv::waitKey(1);
 
         cout << sum_score / (float) count << endl;
     }
 
+
     cout << "average fps: " << sum_fps / (float) count << endl;
     cout << "average score: " << sum_score / (float) count << endl;
+
+    cap.release();
+//    video.release();
+    destroyAllWindows();
     return 0;
 }
 
