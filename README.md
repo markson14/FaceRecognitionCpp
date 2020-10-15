@@ -1,34 +1,5 @@
 # Face-Recognition-Cpp
 
-### :fire: Updates:
-
-#### 2020.07.03
-
-- Formatting Output Structure. Now your confidence score is shown at the top-left corner of your bbox
-- Add One time inference method [InferenceOnce](./facetracking.cpp) in facetracking.cpp
-
-#### 2020.03.10
-
-- Make Face Detection(MTCNN & RetinaFace) as an individual function to call.
-
-#### 2020.01.09
-
-- Add Edge-distance detection && face angle for extensional usage
-
-#### 2019.10.31
-
-- Add RetinaFace TVM module as face detector, the bboxes and pts are much stabler than MTCNNs'
-- Ablation Experiment
-
-|      Backbone      |  Size   |     FPS     | Average Cosine Simi |
-| :----------------: | :-----: | :---------: | :-----------------: |
-|     **MTCNN**      | 640x480 | **31.7331** |      80.8787%       |
-| **RetinaFace-TVM** | 640x480 |   20.9007   |    **87.8968%**     |
-
-
-
----
-
 ### Introduction
 
 - Detect:
@@ -40,6 +11,13 @@ This project is using **Fast-MTCNN** for face detection and **TVM inference mode
 
 ![output](assets/demo.gif)
 
+### PerformanceÏ
+
+|      Backbone      |  Size   |     FPS     | Average Cosine Simi |
+| :----------------: | :-----: | :---------: | :-----------------: |
+|     **MTCNN**      | 640x480 | **31.7331** |      80.8787%       |
+| **RetinaFace-TVM** | 640x480 |   20.9007   |    **87.8968%**     |
+
 ### Dependency:
 
 - OpenCV >= 3.4.1
@@ -50,10 +28,27 @@ This project is using **Fast-MTCNN** for face detection and **TVM inference mode
 - **OpenCV**
 
 ```shell
+# macos
 brew install opencv
 brew link opencv
 brew install pkg-config
-pkg-config --cflags --libs /usr/local/Cellar/opencv/<version_number>/lib/pkgconfig/opencv.pc
+pkg-config --cflags --libs /[path-to-your-opencv]/lib/pkgconfig/opencv.pc
+
+# ========================================================================
+#linux
+# Install minimal prerequisites (Ubuntu 18.04 as reference)
+sudo apt update && sudo apt install -y cmake g++ wget unzip
+# Download and unpack sources
+wget -O opencv.zip https://github.com/opencv/opencv/archive/master.zip
+wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/master.zip
+unzip opencv.zip
+unzip opencv_contrib.zip
+# Create build directory and switch into it
+mkdir -p build && cd build
+# Configure
+cmake -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-master/modules ../opencv-master
+# Build
+cmake --build .
 ```
 
 - **[TVM](https://docs.tvm.ai/install/from_source.html#python-package-installation)**
@@ -104,14 +99,9 @@ make -j4
 4. **Stage:** set how many stage for MTCNN to implement.
 5. **Average Faces:** default 1 
 
-### #TODO
-
-- [ ] Quantize ArcFace
-- [ ] Quantize RetinaFace
-
 ---
 
-**Citation:**
+### Reference
 
 ```markdown
 @inproceedings{imistyrain2018MTCNN,

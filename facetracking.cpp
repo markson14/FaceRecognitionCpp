@@ -269,7 +269,7 @@ int RetinaFaceTracking(RetinaFaceDeploy &deploy_track, FR_MFN_Deploy &deploy_rec
     //TVM
     Mat faces, face_avg;
     vector<Mat> face_list;
-    if (0) {
+    if (1) {
         for (int i = 1; i <= avg_face; i++) {
             faces = imread("/Users/marksonzhang/Project/Face-Recognition-Cpp/" + format("img/zzw_%d_retina.jpg", i));
             resize(faces, faces, Size(112, 112), 0, 0, INTER_LINEAR);
